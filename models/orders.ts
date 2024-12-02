@@ -17,7 +17,7 @@ const orderSchema: Schema<Order> = new Schema({
     user: {type: mongoose.Types.ObjectId, ref: "User"},
     product: {type: mongoose.Types.ObjectId, ref: "Product"},
     quantity: {type: Number, required: true},
-    orderDate: {type: Date, default: Date.now(), required: true}, 
+    orderDate: {type: Date, default: new Date()}, 
 })
 
 // initializing a "Order" model

@@ -85,5 +85,6 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+
 // exporting the controllers/middlewares
 export default {getUser, createUser, updateUser};

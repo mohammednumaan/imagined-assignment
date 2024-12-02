@@ -9,6 +9,8 @@ import mongoose from 'mongoose';
 import indexRouter from './routes/indexRouter';
 import userRouter from './routes/userRouter';
 import productRouter from './routes/productRouter';
+import orderRouter from './routes/orderRouter';
+
 
 
 // loads the environment variables 
@@ -42,6 +44,8 @@ app.use(morgan('dev'));
 app.use('/', indexRouter);
 app.use('/api/users/', userRouter);
 app.use('/api/products/', productRouter);
+app.use('/api/orders/', orderRouter);
+
 
 
 // setup the express http server so we

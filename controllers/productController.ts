@@ -26,6 +26,7 @@ const getAllProducts = async (req: Request, res: Response): Promise<void> => {
       }
 }
 
+
 // a simple middleware that handles a "GET" request for fetching a specific product
 const getProduct = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -53,7 +54,30 @@ const getProduct = async (req: Request, res: Response): Promise<void> => {
       console.error(error);
       res.status(500).json({ message: 'Error fetching product', error });
     }
-  }
+}
+
+// a simple middleware to handle a "GET" request to compute and retrieve
+// the total stock quantity for all products
+const getTotalProductQuantity = async (req: Request, res: Response): Promise<void> => {
+    try {
+        
+        // we compute the total stock quantity by using aggregation functions,
+        // here we first group all the products together and compute the sum
+        // of each product's quantity
+        const allProducts = await Product.aggregate([
+            { $group: { _id: null, totalStockQuantity: { $sum: "$stock" } } }
+        ])
+
+        // then, we proceed to "extract" the final quantity value from the above array,
+        // if the length is 0, we simply set the total as 0, else, we set the aggregated value
+        const totalQuantity = allProducts.length > 0 ? allProducts[0].totalStockQuantity : 0;
+        
+        res.status(200).json({ message: 'Computer total stock quantity successfully', totalQuantity });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error computing total stock quantity', error });
+    }
+}
 
 
 // a simple middleware that handles a "POST" request for product creation
@@ -71,7 +95,7 @@ const createProduct = async (req: Request, res: Response): Promise<void> => {
     // check if the product exists, if it does exist,
     // we notify the client that the product already exists
     const productExists = await Product.findOne({name, category: relatedCategory});
-    if (!productExists){
+    if (productExists){
           res.status(400).json({ message: 'Product Already Exists!' });
           return;
     }
@@ -90,7 +114,7 @@ const createProduct = async (req: Request, res: Response): Promise<void> => {
 const updateProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const { productId } = req.params; 
-    const updatedInfo = req.body; 
+    const updatedInfo = req.body;   
 
     // check if the user exists in the database
     // it it doesn't notify the client that there is no 
@@ -117,4 +141,6 @@ const updateProduct = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export default {getAllProducts, getProduct, createProduct, updateProduct}
+
+// exports
+export default {getAllProducts, getProduct, getTotalProductQuantity,  createProduct, updateProduct}

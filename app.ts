@@ -3,7 +3,11 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
+
+// router imports
 import indexRouter from './routes/indexRouter';
+import userRouter from './routes/userRouter';
+
 
 // loads the environment variables 
 dotenv.config();
@@ -17,6 +21,8 @@ app.use(cors());
 app.use(morgan('dev')); 
 
 app.use('/', indexRouter);
+app.use('/api/users/', userRouter);
+
 
 const port = process.env.PORT || 3000;
 

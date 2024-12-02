@@ -2,8 +2,37 @@
 import { Request, Response } from 'express';
 import User from '../models/user';
 
+// a simple middleware thath handles a "GET" request for fetching users
+const getUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+
+    // retrieve the specific user's id
+    const { id } = req.params; 
+
+    // find the user in the database
+    // by the id recieved from the query parameters
+    const user = await User.findById(id);
+
+    // check if the user exists in the database,
+    // if it doesn't, notify the client that the user is nt found
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    // else, we send the user info to the client
+    // note: we wouldn't send the entire info to the client due to 
+    // security reasons to avoid sending passwords (if implemented) and other 
+    // sensitive info. Instead, we send basic details such as name.
+    res.status(200).json({ message: 'User retrieved successfully', user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching user', error });
+  }
+}
+
 // a simple middleware that handles a "POST" request for user creation
-export const createUser = async (req: Request, res: Response): Promise<void> => {
+const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password } = req.body;
 
@@ -26,7 +55,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 };
 
 // a simple middleware that handles a "POST" request for user updation
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
+const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params; 
     const updatedInfo = req.body; 
@@ -41,7 +70,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     }
 
     // else, we get the relevant user and update their information
-    // here, we ensure data integrity by validating the new data,
+    // here, we ensure  data integrity by validating the new data,
     // we make sure that the new data follows the schema rules via the 
     // runValidators option
     const updatedUser = await User.findByIdAndUpdate(id, updatedInfo, {
@@ -56,5 +85,4 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-
-
+export default {getUser, createUser, updateUser};

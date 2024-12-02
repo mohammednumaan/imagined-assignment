@@ -14,7 +14,7 @@ const getUser = async (req: Request, res: Response): Promise<void> => {
     const user = await User.findById(id);
 
     // check if the user exists in the database,
-    // if it doesn't, notify the client that the user is nt found
+    // if it doesn't, notify the client that the user is not found
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;
@@ -34,7 +34,7 @@ const getUser = async (req: Request, res: Response): Promise<void> => {
 // a simple middleware that handles a "POST" request for user creation
 const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, phone } = req.body;
 
     // check if the user exists, if it does exist,
     // we notify the client that the user already exists
@@ -45,8 +45,8 @@ const createUser = async (req: Request, res: Response): Promise<void> => {
     }
 
     // else, we create a new user with the provided details
-    // and store it in the mongo databas
-    const newUser = await User.create({ name, email, password });
+    // and store it in the mongo database
+    const newUser = await User.create({ name, email, phone });
     res.status(201).json({ message: 'User Created Successfully.', user: newUser });
   } catch (error) {
     console.error(error);
@@ -57,13 +57,13 @@ const createUser = async (req: Request, res: Response): Promise<void> => {
 // a simple middleware that handles a "POST" request for user updation
 const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params; 
+    const { userId } = req.params; 
     const updatedInfo = req.body; 
 
     // check if the user exists in the database
     // it it doesn't notify the client that there is no 
     // such user 
-    const userExists = await User.findById({ id });
+    const userExists = await User.findById(userId);
     if (!userExists) {
       res.status(400).json({ message: 'User Not Found!' });
       return;
@@ -73,7 +73,7 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
     // here, we ensure  data integrity by validating the new data,
     // we make sure that the new data follows the schema rules via the 
     // runValidators option
-    const updatedUser = await User.findByIdAndUpdate(id, updatedInfo, {
+    const updatedUser = await User.findByIdAndUpdate(userId, updatedInfo, {
       new: true, 
       runValidators: true, 
     });
@@ -85,4 +85,5 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// exporting the controllers/middlewares
 export default {getUser, createUser, updateUser};

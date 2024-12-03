@@ -7,11 +7,11 @@ const getUser = async (req: Request, res: Response): Promise<void> => {
   try {
 
     // retrieve the specific user's id
-    const { id } = req.params; 
+    const { userId } = req.params; 
 
     // find the user in the database
     // by the id recieved from the query parameters
-    const user = await User.findById(id);
+    const user = await User.findById(userId);
 
     // check if the user exists in the database,
     // if it doesn't, notify the client that the user is not found

@@ -209,6 +209,11 @@ const updateProduct = [
     const { productId } = req.params; 
     const updatedInfo = req.body;   
 
+    if (Object.keys(updatedInfo).length === 0){
+      res.status(200).json({message: "No Updation"})
+      return;
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       res.status(400).json({ errors: errors.array() });
@@ -218,22 +223,29 @@ const updateProduct = [
     // check if the user exists in the database
     // it it doesn't notify the client that there is no 
     // such user 
-    const productExists = await Product.findById(productId);
+    const productExists = await Product.findById(productId).populate("category");
     if (!productExists) {
       res.status(400).json({ message: 'Product Not Found!' });
       return;
+    }
+
+    // we check if the category exists, if it doesn't we
+    // create the category and proceed to create the product
+    let relatedCategory = await Category.findOne({name: updatedInfo.category});
+    if (!relatedCategory){
+        relatedCategory = await Category.create({name: updatedInfo.category});
     }
 
     // else, we get the relevant product and update their information
     // here, we ensure  data integrity by validating the new data,
     // we make sure that the new data follows the schema rules via the 
     // runValidators option
-    const updatedProduct = await Product.findByIdAndUpdate(productId, updatedInfo, {
+    const updatedProduct = await Product.findByIdAndUpdate(productId, {...updatedInfo, category: relatedCategory}, {
       new: true, 
       runValidators: true, 
     });
 
-    res.status(200).json({ message: 'Product Updated Successfully', user: updatedProduct });
+    res.status(200).json({ message: 'Product Updated Successfully', updateProduct: updatedProduct });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error updating product', error });

@@ -66,7 +66,7 @@ const getWeeklyOrder = async (req: Request, res: Response): Promise<void> => {
 // a simple middleware thath handles a "POST" request for order creation
 const createOrders = [
   
-  body("user").trim().isMongoId().withMessage("User ID must be a valid Id").escape(),
+  body("userId").trim().isMongoId().withMessage("User ID must be a valid Id").escape(),
   body("product").trim().isMongoId().withMessage("Product ID must be a valid Id").escape(),
   body("quantity")
   .optional()
@@ -107,7 +107,7 @@ const createOrders = [
 
         // we then check if the ordered quantity is a valid quantity
         if (quantity > requiredProduct.stock){
-          res.status(400).json({message: "Error updating the order. Order quantity exceeds the available stock! "})
+          res.status(400).json({message: "Error creating the order. Order quantity exceeds the available stock! "})
           return;
         } else{
 
@@ -217,11 +217,15 @@ const updateOrder = [
         res.status(400).json({message: "Error updating the order. Order quantity exceeds the available stock! "})
         return;
       } else{
-          const updatedStock = product.stock - quantity;
-          await Product.findByIdAndUpdate(
-            productId,
-            {stock: updatedStock}
-          )
+
+          let updatedStock;
+          if (status === "placed"){
+            updatedStock = (quantity < order.quantity) ? product.stock + (order.quantity - quantity) : product.stock - (quantity - order.quantity)
+            await Product.findByIdAndUpdate(
+              productId,
+              {stock: updatedStock}
+            )
+          }
       }
 
       // we are now ready to proceed to update the order in a regular way

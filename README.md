@@ -66,7 +66,7 @@ After Caching:
 ### Indexing
 
 I also implemented basic indexing to fetch database documents more efficiently. This increases the overall performance of the back-end server.
-Indexes for large datasets might cause some issues. For example, it could slow down creation/updation operations as well increase the space used (since its an extra data-structure), which is really crucial for a platform like an E-Commerce application.
+Indexes for large datasets might cause some issues. For example, it could slow down creation/updation operations as well increase the space used (since its an extra data-structure), which can significantly cause performance issues for a platform like an E-Commerce application.
 
 For example, I set a composite index for the `order` collection. This is especially useful for the route which returns the order details for the **last seven days**. 
 

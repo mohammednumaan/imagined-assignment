@@ -4,28 +4,29 @@ import Order from '../models/orders';
 import Product from '../models/products';
 import User from '../models/user';
 
-// a simple middleware thath handles a "GET" request for fetching orders
-const getOrder = async (req: Request, res: Response): Promise<void> => {
+// a simple middleware thath handles a "GET" request for fetching orders of a specific user
+const getUserOrders = async (req: Request, res: Response): Promise<void> => {
   try {
 
-    // retrieve the specific user's id
-    const { orderId } = req.params; 
+      // retrieve the specific user's id
+      const { userId } = req.params; 
 
-    // find the user in the database
-    // by the id recieved from the query parameters
-    const user = await Order.findById(orderId);
+    // find the order in the database
+    // by the userId recieved from the query parameters
+    const orders = await Order.find({user: userId}).populate("product").populate("user").sort({orderDate: -1});
 
-    // check if the user exists in the database,
-    // if it doesn't, notify the client that the user is not found
-    if (!user) {
-      res.status(404).json({ message: 'Order not found' });
+
+    // check if any orders exists in the database for the user,
+    // if it doesn't, notify the client that no orders are placed
+    if (orders.length == 0) {
+      res.status(404).json({ message: 'No orders placed!' });
       return;
     }
 
-    res.status(200).json({ message: 'Order retrieved successfully', user });
+    res.status(200).json({ message: 'Orders retrieved successfully', orders });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error fetching order', error });
+    res.status(500).json({ message: 'Error fetching orders', error });
   }
 }
 
@@ -82,4 +83,32 @@ const createOrders = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
-export default {getOrder, getWeeklyOrder, createOrders}
+// a simple middleware to handle a "PUT" request to handle updation of orders
+const updateOrder = async (req: Request, res: Response): Promise<void> => {
+  try {
+      const { orderId, productId } = req.params; 
+      let { quantity, orderDate, status } = req.body;
+
+      if (!orderDate) orderDate = new Date();
+
+      const order = await Order.findById(orderId);
+      if (!order){
+        res.status(404).json({ message: "Order not found" });
+        return;
+      }
+
+      const updatedOrder = await Order.findByIdAndUpdate(
+          orderId,
+          { product: productId, quantity, orderDate, status},
+          { new: true, runValidators: true } 
+      ).populate("user product");
+
+      res.status(200).json({ message: "Order updated successfully", updatedOrder});
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error updating order", error});
+  }
+};
+
+// exports
+export default {getUserOrders, getWeeklyOrder, createOrders, updateOrder}

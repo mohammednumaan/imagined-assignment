@@ -12,7 +12,6 @@ import productRouter from './routes/productRouter';
 import orderRouter from './routes/orderRouter';
 
 
-
 // loads the environment variables 
 dotenv.config();
 

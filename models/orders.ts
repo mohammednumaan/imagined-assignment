@@ -1,13 +1,16 @@
 // imports
 import mongoose, { Date, Model, model, ObjectId, Schema } from "mongoose";
 
+type status = "ongoing" | "complete" | "cancelled"
+
 // an interface to explicitily 
 // describe each order document
 interface Order{
     user: ObjectId,
     product: ObjectId,
     quantity: number,
-    orderDate: Date
+    orderDate: Date,
+    status: status
 }
 
 // defining a document schema of type "Order".
@@ -18,6 +21,7 @@ const orderSchema: Schema<Order> = new Schema({
     product: {type: mongoose.Types.ObjectId, ref: "Product"},
     quantity: {type: Number, required: true},
     orderDate: {type: Date, default: new Date()}, 
+    status: {type: String, default: "ongoing"}
 })
 
 // initializing a "Order" model

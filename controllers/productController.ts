@@ -2,6 +2,8 @@
 import { Request, Response } from 'express';
 import Product from '../models/products';
 import Category from '../models/category';
+import Order from '../models/orders';
+import mongoose, { mongo } from 'mongoose';
 
 
 // a simple middleware that handles a "GET" request for fetching all the products
@@ -26,9 +28,8 @@ const getAllProducts = async (req: Request, res: Response): Promise<void> => {
       }
 }
 
-
 // a simple middleware that handles a "GET" request for fetching a specific product
-const getProduct = async (req: Request, res: Response): Promise<void> => {
+const getSpecificProduct = async (req: Request, res: Response): Promise<void> => {
     try {
   
       // retrieve the specific product's id
@@ -45,15 +46,61 @@ const getProduct = async (req: Request, res: Response): Promise<void> => {
         return;
       }
   
-      // else, we send the user info to the client
-      // note: we wouldn't send the entire info to the client due to 
-      // security reasons to avoid sending passwords (if implemented) and other 
-      // sensitive info. Instead, we send basic details such as name.
+      // else, we send the product info to the client
       res.status(200).json({ message: 'Product retrieved successfully', product });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error fetching product', error });
     }
+}
+
+// a simple middleware that handles a "GET" request for fetching users who bought a specific product
+const getUsersForProduct = async (req: Request, res: Response): Promise<void> => {
+  try {
+
+    // retrieve the specific product's id
+    const { productId } = req.params; 
+
+    // find the product in the database
+    // by the id recieved from the query parameters
+    const product = await Product.findById(productId);
+
+    // check if the product exists in the database,
+    // if it doesn't, notify the client that the product is nt found
+    if (!product) {
+      res.status(404).json({ message: 'Product not found' });
+      return;
+    }
+
+    // then, we fetch all the orders for that specific product
+    const users = await Order.aggregate([
+      {$match: {product: new mongoose.Types.ObjectId(productId)}},
+      {
+          $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "allUsers",
+          },
+      },
+
+      { $unwind: "$allUsers" },
+
+      {
+          $group: {
+              _id: "$allUsers._id",
+              name: { $first: "$allUsers.name" },
+              email: { $first: "$allUsers.email" },
+          },
+      },
+  ]);
+
+    // we are now ready to send the user payload to the client
+    res.status(200).json({ message: 'Users retrieved successfully', users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching users', error });
+  }
 }
 
 // a simple middleware to handle a "GET" request to compute and retrieve
@@ -139,8 +186,8 @@ const updateProduct = async (req: Request, res: Response): Promise<void> => {
     console.error(error);
     res.status(500).json({ message: 'Error updating product', error });
   }
-};
+};  
 
 
 // exports
-export default {getAllProducts, getProduct, getTotalProductQuantity,  createProduct, updateProduct}
+export default {getAllProducts, getSpecificProduct, getUsersForProduct, getTotalProductQuantity,  createProduct, updateProduct}

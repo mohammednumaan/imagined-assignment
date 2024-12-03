@@ -4,7 +4,11 @@ import { Request, Response } from 'express';
 import Order from '../models/orders';
 import Product from '../models/products';
 import User from '../models/user';
+import apicache from 'apicache';
 
+
+// a basic cache implmentation to improve performance
+const cache = apicache.middleware;
 
 // a simple middleware thath handles a "GET" request for fetching orders of a specific user
 const getUserOrders = async (req: Request, res: Response): Promise<void> => {
@@ -62,6 +66,9 @@ const getWeeklyOrder = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
+// we implement a basic cache-aside strategy and cache the data for 10 minutes 
+// this significantly improved performance
+export const cachedGetAllWeeklyOrders = [cache('10 minutes'), getWeeklyOrder];
 
 // a simple middleware thath handles a "POST" request for order creation
 const createOrders = [
@@ -244,4 +251,4 @@ const updateOrder = [
 }];
 
 // exports
-export default {getUserOrders, getWeeklyOrder, createOrders, updateOrder}
+export default {getUserOrders, cachedGetAllWeeklyOrders, createOrders, updateOrder}

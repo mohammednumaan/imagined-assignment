@@ -1,5 +1,6 @@
 // imports
-import express, { Request, Response } from 'express';
+import express from 'express';
+import compression from "compression";
 import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -21,7 +22,7 @@ const mongoConnectionURI: string = process.env.MONGO_URI || "mongodb://localhost
 
 main().catch((err) => console.log(err));
 async function main(){
-  try{
+  try{  
     await mongoose.connect(mongoConnectionURI);
     console.log("Connected To MongoDB...");
   } catch(err){
@@ -32,10 +33,15 @@ async function main(){
 // an instance of the express module
 const app = express();
 
+// use the gzip compression to compress
+// response headers, increasing the performance
+app.use(compression()); 
+
+app.use(cors());
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
 app.use(morgan('dev')); 
+
 
 // defining middlewares to be used by express
 // this list includes an index route, user routes,

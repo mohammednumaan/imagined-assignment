@@ -5,7 +5,10 @@ import Product from '../models/products';
 import Category from '../models/category';
 import Order from '../models/orders';
 import mongoose, { mongo } from 'mongoose';
+import apicache from 'apicache';
 
+// a basic cache implmentation to improve performance
+const cache = apicache.middleware;
 
 // a simple middleware that handles a "GET" request for fetching all the products
 const getAllProducts = async (req: Request, res: Response): Promise<void> => {
@@ -28,6 +31,10 @@ const getAllProducts = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ message: 'Error fetching all products', error });
       }
 }
+
+// we implement a basic cache-aside strategy and cache the data for 10 minutes 
+// this significantly improved performance
+export const cachedGetAllProducts = [cache('10 minutes'), getAllProducts];
 
 // a simple middleware that handles a "GET" request for fetching a specific product
 const getSpecificProduct = async (req: Request, res: Response): Promise<void> => {
@@ -254,4 +261,4 @@ const updateProduct = [
 
 
 // exports
-export default {getAllProducts, getSpecificProduct, getUsersForProduct, getTotalProductQuantity,  createProduct, updateProduct}
+export default {cachedGetAllProducts, getSpecificProduct, getUsersForProduct, getTotalProductQuantity,  createProduct, updateProduct}

@@ -7,7 +7,7 @@ import productController from '../controllers/productController';
 const router = Router();
 
 // various routes to handle retrieval, creation and updation of product 
-router.get('/', productController.getAllProducts);
+router.get('/', productController.cachedGetAllProducts);
 router.get('/total-quantity', productController.getTotalProductQuantity);
 router.get('/:productId', productController.getSpecificProduct);
 router.get('/users/:productId', productController.getUsersForProduct);  

@@ -20,6 +20,10 @@ const userSchema: Schema<User> = new Schema({
     phone: {type: String, required: true},
 })
 
+// setting up basic indexing for the category field
+// to optimize querying for the user collection 
+userSchema.index({ email: 1 });
+
 // initializing a "User" model
 const User: Model<User> = model<User>('User', userSchema);
 

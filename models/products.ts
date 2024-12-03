@@ -22,6 +22,10 @@ const productSchema: Schema<Product> = new Schema({
     
 })
 
+// setting up basic indexing to optimize 
+// queries. here we use category field
+productSchema.index({name: 1, price: -1})
+
 // initializing a "Product" model
 const Product: Model<Product> = model<Product>('Product', productSchema);
 

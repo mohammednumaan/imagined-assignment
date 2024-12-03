@@ -19,7 +19,7 @@ const getUserOrders = async (req: Request, res: Response): Promise<void> => {
 
     // find the order in the database
     // by the userId recieved from the query parameters
-    const orders = await Order.find({user: userId}).populate("product").populate("user").sort({orderDate: -1});
+    const orders = await Order.find({user: userId}).populate("product").populate("user").sort({user: 1, orderDate: -1})
 
 
     // check if any orders exists in the database for the user,

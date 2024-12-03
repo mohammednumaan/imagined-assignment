@@ -51,6 +51,8 @@ I implemented `GZIP` compression to compress response headers. This significantl
 
 I also implemented caching for routes that are frequently requested such as the route which **Fetches** all the products from ther server. Note that this is a basic implementation of caching and uses the standard `Cache-Aside` strategy.
 
+For this assignment, I implemented caching in routes that fetches a large portion of data, namely `weekly orders` and `all products` data fetches, for simplicity.
+
 This is a visual representation of it:
 ![cache_strategy](image-2.png)
 
@@ -64,7 +66,10 @@ After Caching:
 ### Indexing
 
 I also implemented basic indexing to fetch database documents more efficiently. This increases the overall performance of the back-end server.
+Indexes for large datasets might cause some issues. For example, it could slow down creation/updation operations as well increase the space used (since its an extra data-structure), which is really crucial for a platform like an E-Commerce application.
 
-```
-Note: Implementing Pagination for routes that retrieve a large amount of data is recommended since it can increase performance significantly. Using a Cursor-Based Pagination Strategy is recommended. (I was about to implement this, but couldn't due to time-constraints and exams).
-```
+For example, I set a composite index for the `order` collection. This is especially useful for the route which returns the order details for the **last seven days**. 
+
+# Additional Notes
+
+Implementing Pagination for routes that retrieve a large amount of data is recommended since it can increase performance significantly. Using a Cursor-Based Pagination Strategy is recommended. (I was about to implement this, but couldn't due to time-constraints and exams).   

@@ -24,6 +24,14 @@ const orderSchema: Schema<Order> = new Schema({
     status: {type: String, default: "placed"}
 })
 
+
+// setting up basic indexing to optimize 
+// queries. here we use user and product
+// because those fields are used mostly while querying
+orderSchema.index({ product: 1, orderDate: -1});
+orderSchema.index({user: 1, orderDate: -1});
+
+
 // initializing a "Order" model
 const Order: Model<Order> = model<Order>('Order', orderSchema);
 

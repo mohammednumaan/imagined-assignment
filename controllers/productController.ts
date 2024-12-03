@@ -15,7 +15,7 @@ const getAllProducts = async (req: Request, res: Response): Promise<void> => {
     try {
     
         // we fetch all the products in the database
-        const allProducts = await Product.find({});
+        const allProducts = await Product.find({}).sort({name: 1});
     
         // check if any product exists in the database,
         // if it doesn't, notify the client that there are no products

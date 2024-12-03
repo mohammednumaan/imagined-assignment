@@ -1,8 +1,10 @@
 // imports
+import { body, validationResult } from "express-validator";
 import { Request, Response } from 'express';
 import Order from '../models/orders';
 import Product from '../models/products';
 import User from '../models/user';
+
 
 // a simple middleware thath handles a "GET" request for fetching orders of a specific user
 const getUserOrders = async (req: Request, res: Response): Promise<void> => {
@@ -23,6 +25,7 @@ const getUserOrders = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // finally, send the payload to the client
     res.status(200).json({ message: 'Orders retrieved successfully', orders });
   } catch (error) {
     console.error(error);
@@ -30,14 +33,17 @@ const getUserOrders = async (req: Request, res: Response): Promise<void> => {
   }
 }
 
-// a simple middleware thath handles a "GET" request for fecthing orders in the past 7 days
+// a simple middleware that handles a "GET" request for fecthing orders in the past 7 days
 const getWeeklyOrder = async (req: Request, res: Response): Promise<void> => {
     try {
       
+      // computing the dates from today to the last 7 days
       let currentDate = new Date();
       let lastSeventhDay = new Date();
       lastSeventhDay.setDate(currentDate.getDate() - 7);
 
+      // we now perform an aggregation to fetch order documents
+      // for the past 7 days
       const lastSevenDaysOrders = await Order.aggregate([
        {
         $match: {
@@ -48,6 +54,7 @@ const getWeeklyOrder = async (req: Request, res: Response): Promise<void> => {
        {$sort: {orderDate: -1}} 
       ])
 
+      // finally, send the payload to the client
       res.status(200).json({ message: 'Last 7 Order retrieved successfully', lastSevenDaysOrders });
     } catch (error) {
       console.error(error);
@@ -56,50 +63,172 @@ const getWeeklyOrder = async (req: Request, res: Response): Promise<void> => {
 }
 
 
-// a simple middleware thath handles a "GET" request for fetching orders
-const createOrders = async (req: Request, res: Response): Promise<void> => {
+// a simple middleware thath handles a "POST" request for order creation
+const createOrders = [
+  
+  body("user").trim().isMongoId().withMessage("User ID must be a valid Id").escape(),
+  body("product").trim().isMongoId().withMessage("Product ID must be a valid Id").escape(),
+  body("quantity")
+  .optional()
+  .trim()
+  .escape(),
+  body("orderDate")
+    .optional()
+    .trim()
+    .isISO8601()
+    .withMessage("Order date must be a valid date")
+    .escape(),
+  
+  async (req: Request, res: Response): Promise<void> => {
     try {
-        const { userMail, product, quantity} = req.body;
 
-        const user = await User.findOne({email: userMail});
+        // retrieve order information
+        const { userId, product, quantity} = req.body;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+          res.status(400).json({ errors: errors.array() });
+          return;
+        }
+        
+        // check if the user exists
+        const user = await User.findById(userId);
         if (!user){
             res.status(400).json({ message: 'User Does Not Exists!' });
             return;
         }
 
+        // similarly, we check if the product exists
         const requiredProduct = await Product.findById(product);
         if (!requiredProduct){
               res.status(400).json({ message: 'Product Does Not Exists!' });
               return;
+        } 
+
+        // we then check if the ordered quantity is a valid quantity
+        if (quantity > requiredProduct.stock){
+          res.status(400).json({message: "Error updating the order. Order quantity exceeds the available stock! "})
+          return;
+        } else{
+
+          // we update the product's stock
+          const updatedStock = requiredProduct.stock - quantity;
+          
+          await Product.findByIdAndUpdate(
+            product,
+            {stock: updatedStock}
+          )
         }
     
-        // else, we create a new order with the provided details
+        // finally, we create a new order with the provided details
         // and store it in the mongo database
-        const newOrder = await Order.create({ user, product, quantity, orderDate: new Date()});
+        const newOrder = await Order.create({ user, product, quantity, orderDate: new Date(), status: "placed"});
         res.status(201).json({ message: 'Order Placed Successfully.', newOrder});
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error placing order', error });
     }
-}
+}];
 
 // a simple middleware to handle a "PUT" request to handle updation of orders
-const updateOrder = async (req: Request, res: Response): Promise<void> => {
+const updateOrder = [
+
+  body("quantity")
+  .optional()
+  .trim()
+  .escape(),
+  body("orderDate")
+    .optional()
+    .trim()
+    .isISO8601()
+    .withMessage("Order date must be a valid date")
+    .escape(),
+  body("status")
+    .optional()
+    .trim()
+    .escape(),
+  
+  
+  async (req: Request, res: Response): Promise<void> => {
   try {
+
+      // retrieve the order and product id 
+      // as well as the updated fields
       const { orderId, productId } = req.params; 
       let { quantity, orderDate, status } = req.body;
 
-      if (!orderDate) orderDate = new Date();
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        res.status(400).json({ errors: errors.array() });
+        return;
+      }
 
+      // if there is no re-schedule, status
+      // we default them to the default values
+      if (!orderDate) orderDate = new Date();
+      if (!status) status = "placed"
+      
+      // check if the order exists, if it doesn't
+      // we notify the client that no orders were found
       const order = await Order.findById(orderId);
       if (!order){
         res.status(404).json({ message: "Order not found" });
         return;
       }
+      
+      // similarly, we check if the product exists
+      const product = await Product.findById(productId);
+      if (!product){
+        res.status(404).json({ message: "Product not found" });
+        return;
+      }
+      
 
+      // if no quantity is present, we default
+      // its values to its exisitng quantity value
+      if (!quantity) quantity = order.quantity;
+      
+      // then, we proceed to check the updated status,
+      // if the status is cancelled, we proceed to "re-stock"
+      // and update the relevant product and order info
+      if (status === "cancelled"){
+
+          // computing the new stock quantity value
+          const updatedStock = product.stock + quantity;
+          await Product.findByIdAndUpdate(
+            productId,
+            {stock: updatedStock}
+          )
+          
+          // we then update the order.
+          // note that, we are not deleting it
+          // for enterprise applications we would "BACK-UP" this data
+          // and probably do a routine deletion of redundant/unnecessary data
+          await Order.findByIdAndUpdate(
+            orderId,
+            { product: productId, quantity: 0, orderDate, status},
+        )
+        res.status(200).json({message: "Order Cancelled Successfully! "})
+        return;
+      }
+
+      // we now check if the quantity is a valid quantity
+      if (quantity > product.stock){
+        res.status(400).json({message: "Error updating the order. Order quantity exceeds the available stock! "})
+        return;
+      } else{
+          const updatedStock = product.stock - quantity;
+          await Product.findByIdAndUpdate(
+            productId,
+            {stock: updatedStock}
+          )
+      }
+
+      // we are now ready to proceed to update the order in a regular way
+      // i.e updating quantity, status and etc,.
       const updatedOrder = await Order.findByIdAndUpdate(
           orderId,
-          { product: productId, quantity, orderDate, status},
+          { product: product.id, quantity, orderDate, status},
           { new: true, runValidators: true } 
       ).populate("user product");
 
@@ -108,7 +237,7 @@ const updateOrder = async (req: Request, res: Response): Promise<void> => {
     console.error(error);
     res.status(500).json({ message: "Error updating order", error});
   }
-};
+}];
 
 // exports
 export default {getUserOrders, getWeeklyOrder, createOrders, updateOrder}

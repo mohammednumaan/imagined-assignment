@@ -1,4 +1,5 @@
 // imports
+import { body, validationResult } from "express-validator";
 import { Request, Response } from 'express';
 import Product from '../models/products';
 import Category from '../models/category';
@@ -33,11 +34,11 @@ const getSpecificProduct = async (req: Request, res: Response): Promise<void> =>
     try {
   
       // retrieve the specific product's id
-      const { id } = req.params; 
+      const { productId } = req.params; 
   
       // find the product in the database
       // by the id recieved from the query parameters
-      const product = await Product.findById(id);
+      const product = await Product.findById(productId);
   
       // check if the product exists in the database,
       // if it doesn't, notify the client that the product is nt found
@@ -119,7 +120,7 @@ const getTotalProductQuantity = async (req: Request, res: Response): Promise<voi
         // if the length is 0, we simply set the total as 0, else, we set the aggregated value
         const totalQuantity = allProducts.length > 0 ? allProducts[0].totalStockQuantity : 0;
         
-        res.status(200).json({ message: 'Computer total stock quantity successfully', totalQuantity });
+        res.status(200).json({ message: 'Computed total stock quantity successfully', totalQuantity });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error computing total stock quantity', error });
@@ -128,9 +129,34 @@ const getTotalProductQuantity = async (req: Request, res: Response): Promise<voi
 
 
 // a simple middleware that handles a "POST" request for product creation
-const createProduct = async (req: Request, res: Response): Promise<void> => {
+const createProduct = [
+
+  body("name")
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("Product name is required and must be a string."),
+  body("price")
+    .isFloat({ min: 0 })
+    .withMessage("Price must be a number greater than or equal to 0."),
+  body("stock")
+    .isInt({ min: 0 })
+    .withMessage("Stock must be an integer greater than or equal to 0."),
+  body("category")
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("Category name is required and must be a string."),
+
+  async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, category, price, stock } = req.body;
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
 
     // first, we check if the category exists, if it doesn't we
     // create the category and proceed to create the product
@@ -155,13 +181,39 @@ const createProduct = async (req: Request, res: Response): Promise<void> => {
     console.error(error);
     res.status(500).json({ message: 'Error creating product', error });
   }
-};
+}];
 
 // a simple middleware that handles a "POST" request for product updation
-const updateProduct = async (req: Request, res: Response): Promise<void> => {
+const updateProduct = [
+  
+  body("name")
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("Product name is required and must be a string."),
+  body("price")
+    .isFloat({ min: 0 })
+    .withMessage("Price must be a number greater than or equal to 0."),
+  body("stock")
+    .isInt({ min: 0 })
+    .withMessage("Stock must be an integer greater than or equal to 0."),
+  body("category")
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("Category name is required and must be a string."),
+
+  async (req: Request, res: Response): Promise<void> => {
   try {
+    
     const { productId } = req.params; 
     const updatedInfo = req.body;   
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
 
     // check if the user exists in the database
     // it it doesn't notify the client that there is no 
@@ -186,7 +238,7 @@ const updateProduct = async (req: Request, res: Response): Promise<void> => {
     console.error(error);
     res.status(500).json({ message: 'Error updating product', error });
   }
-};  
+}];  
 
 
 // exports

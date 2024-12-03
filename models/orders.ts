@@ -1,7 +1,7 @@
 // imports
 import mongoose, { Date, Model, model, ObjectId, Schema } from "mongoose";
 
-type status = "ongoing" | "complete" | "cancelled"
+type status = "placed" | "dispatched" | "shipped" | "delivered" | "cancelled"
 
 // an interface to explicitily 
 // describe each order document
@@ -21,7 +21,7 @@ const orderSchema: Schema<Order> = new Schema({
     product: {type: mongoose.Types.ObjectId, ref: "Product"},
     quantity: {type: Number, required: true},
     orderDate: {type: Date, default: new Date()}, 
-    status: {type: String, default: "ongoing"}
+    status: {type: String, default: "placed"}
 })
 
 // initializing a "Order" model

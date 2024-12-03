@@ -75,7 +75,7 @@ const getUsersForProduct = async (req: Request, res: Response): Promise<void> =>
 
     // then, we fetch all the orders for that specific product
     const users = await Order.aggregate([
-      {$match: {product: new mongoose.Types.ObjectId(productId)}},
+      {$match: {product: new mongoose.Types.ObjectId(productId), status: "delivered"}},
       {
           $lookup: {
               from: "users",

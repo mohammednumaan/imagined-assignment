@@ -2,6 +2,28 @@
 import { Request, Response } from 'express';
 import User from '../models/user';
 
+// a simple middleware that handles a "GET" request for fetching all the users
+const getAllUsers = async (req: Request, res: Response): Promise<void> => {
+    try {
+    
+        // we fetch all the products in the database
+        const allUsers = await User.find({}).sort({email: 1});
+    
+        // check if any product exists in the database,
+        // if it doesn't, notify the client that there are no products
+        if (!allUsers) {
+          res.status(404).json({ message: 'No Users Found' });
+          return;
+        }
+    
+        // else, we send all the product's info to the client
+        res.status(200).json({ message: 'All Users retrieved successfully', allUsers });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error fetching all users', error });
+      }
+}
+
 // a simple middleware thath handles a "GET" request for fetching users
 const getUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -87,4 +109,4 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
 
 
 // exporting the controllers/middlewares
-export default {getUser, createUser, updateUser};
+export default {getAllUsers, getUser, createUser, updateUser};

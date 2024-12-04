@@ -14,11 +14,11 @@ import orderRouter from './routes/orderRouter';
 
 
 // loads the environment variables 
-dotenv.config();
+dotenv.config()
 
 // setup a connection to the MongoDB via mongoose
 mongoose.set('strictQuery', false);
-const mongoConnectionURI: string = process.env.MONGO_URI || "mongodb://localhost:27017/imagined_dev";
+const mongoConnectionURI = process.env.MONGO_URI as string
 
 main().catch((err) => console.log(err));
 async function main(){

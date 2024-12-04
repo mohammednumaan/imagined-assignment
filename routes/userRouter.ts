@@ -7,7 +7,7 @@ import userController from '../controllers/userControllers';
 const router = Router();
 
 // various routes to handle retrieval, creation and updation of users 
-router.get('/', userController.getAllUsers);
+router.get('/', userController.cachedGetAllUsers);
 router.get('/:userId', userController.getUser);
 router.post('/', userController.createUser);
 router.put('/:userId', userController.updateUser);

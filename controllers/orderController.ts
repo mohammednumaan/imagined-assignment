@@ -10,6 +10,32 @@ import apicache from 'apicache';
 // a basic cache implmentation to improve performance
 const cache = apicache.middleware;
 
+// a simple middleware that handles a "GET" request for fetching all the users
+const getAllOrders = async (req: Request, res: Response): Promise<void> => {
+  try {
+  
+      // we fetch all the products in the database
+      const allOrders = await Order.find({}).sort({orderDate: 1});
+  
+      // check if any product exists in the database,
+      // if it doesn't, notify the client that there are no products
+      if (!allOrders) {
+        res.status(404).json({ message: 'No orders Found' });
+        return;
+      }
+  
+      // else, we send all the product's info to the client
+      res.status(200).json({ message: 'All orders retrieved successfully', allOrders });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error fetching all orders', error });
+    }
+}
+
+// we implement a basic cache-aside strategy and cache the data for 10 minutes 
+// this significantly improved performance
+export const cachedGetAllOrders = [cache('10 minutes'), getAllOrders];
+
 // a simple middleware thath handles a "GET" request for fetching orders of a specific user
 const getUserOrders = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -251,4 +277,4 @@ const updateOrder = [
 }];
 
 // exports
-export default {getUserOrders, cachedGetAllWeeklyOrders, createOrders, updateOrder}
+export default {cachedGetAllOrders, getUserOrders, cachedGetAllWeeklyOrders, createOrders, updateOrder}

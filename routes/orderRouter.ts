@@ -7,6 +7,8 @@ import orderController from '../controllers/orderController';
 const router = Router();
 
 // various routes to handle retrieval, creation and updation of orders 
+router.get('/', orderController.cachedGetAllOrders);
+
 router.get('/past-week', orderController.cachedGetAllWeeklyOrders);
 router.get('/:userId', orderController.getUserOrders);
 

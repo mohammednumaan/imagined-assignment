@@ -1,6 +1,10 @@
 // imports
 import { Request, Response } from 'express';
+import apicache from 'apicache';
 import User from '../models/user';
+
+// a basic cache implmentation to improve performance
+const cache = apicache.middleware;
 
 // a simple middleware that handles a "GET" request for fetching all the users
 const getAllUsers = async (req: Request, res: Response): Promise<void> => {
@@ -23,6 +27,11 @@ const getAllUsers = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ message: 'Error fetching all users', error });
       }
 }
+
+// we implement a basic cache-aside strategy and cache the data for 10 minutes 
+// this significantly improved performance
+export const cachedGetAllUsers = [cache('10 minutes'), getAllUsers];
+
 
 // a simple middleware thath handles a "GET" request for fetching users
 const getUser = async (req: Request, res: Response): Promise<void> => {
@@ -109,4 +118,4 @@ const updateUser = async (req: Request, res: Response): Promise<void> => {
 
 
 // exporting the controllers/middlewares
-export default {getAllUsers, getUser, createUser, updateUser};
+export default {cachedGetAllUsers, getUser, createUser, updateUser};
